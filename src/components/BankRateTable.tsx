@@ -75,7 +75,11 @@ export default function BankRateTable({ currentLang, onApplyBankRate }: BankRate
                 </td>
                 <td className="px-5 py-4 text-right">
                   <button
-                    onClick={() => onApplyBankRate(bank.currentRate, bank.name)}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onApplyBankRate(bank.currentRate, bank.name);
+                    }}
                     className="group inline-flex items-center gap-1.5 rounded-xl bg-indigo-50/80 px-3.5 py-2 text-xs font-bold text-indigo-700 hover:bg-indigo-600 hover:text-white transition-all cursor-pointer dark:bg-slate-800 dark:text-indigo-400 dark:hover:bg-indigo-600 dark:hover:text-white shadow-sm active:scale-95 duration-200"
                   >
                     <span>{t.applyBankRate}</span>

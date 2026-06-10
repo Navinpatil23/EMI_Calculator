@@ -577,7 +577,7 @@ export default function App() {
                   
                   <div className="mb-8 flex overflow-x-auto gap-1 rounded-2xl bg-slate-100/60 p-1.5 dark:bg-slate-800/60 max-w-md border border-slate-200/30 dark:border-slate-800/30" id="loan-type-tabs">
                     <button
-                      onClick={() => { setLoanType('home'); setAmount(5000000); }}
+                      onClick={() => setLoanType('home')}
                       className={`flex-1 min-w-[100px] flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition-all duration-200 cursor-pointer ${
                         loanType === 'home'
                           ? 'bg-white text-indigo-650 shadow-md scale-[1.02] dark:bg-slate-700 dark:text-white'
@@ -588,7 +588,7 @@ export default function App() {
                       <span>{lang === 'en' ? 'Home Loan' : 'गृह ऋण (Home)'}</span>
                     </button>
                     <button
-                      onClick={() => { setLoanType('car'); setAmount(1200000); }}
+                      onClick={() => setLoanType('car')}
                       className={`flex-1 min-w-[100px] flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition-all duration-200 cursor-pointer ${
                         loanType === 'car'
                           ? 'bg-white text-indigo-655 shadow-md scale-[1.02] dark:bg-slate-700 dark:text-white'
@@ -599,7 +599,7 @@ export default function App() {
                       <span>{lang === 'en' ? 'Car Loan' : 'कार ऋण (Car)'}</span>
                     </button>
                     <button
-                      onClick={() => { setLoanType('personal'); setAmount(500000); }}
+                      onClick={() => setLoanType('personal')}
                       className={`flex-1 min-w-[100px] flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition-all duration-200 cursor-pointer ${
                         loanType === 'personal'
                           ? 'bg-white text-indigo-655 shadow-md scale-[1.02] dark:bg-slate-700 dark:text-white'
@@ -625,6 +625,7 @@ export default function App() {
                             <span className="text-slate-400 dark:text-slate-505 mr-1 font-semibold">₹</span>
                             <input
                               type="number"
+                              placeholder="500000"
                               value={amount || ''}
                               onChange={(e) => {
                                 const val = parseInt(e.target.value, 10);
