@@ -1,14 +1,14 @@
 import React, { useEffect, useRef } from 'react';
-import { translations } from '../types';
 
 interface ChartsProps {
   principal: number;
   interest: number;
   yearlySchedule: { label: string; principalPaid: number; interestPaid: number }[];
   currentLang: 'en' | 'hi';
+  mode?: 'loan' | 'investment';
 }
 
-export default function LoanCharts({ principal, interest, yearlySchedule, currentLang }: ChartsProps) {
+export default function LoanCharts({ principal, interest, yearlySchedule, currentLang, mode = 'loan' }: ChartsProps) {
   const doughnutRef = useRef<HTMLCanvasElement | null>(null);
   const barRef = useRef<HTMLCanvasElement | null>(null);
   
@@ -28,10 +28,18 @@ export default function LoanCharts({ principal, interest, yearlySchedule, curren
       const total = principal + interest;
       const formattedTotal = total.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
 
+      const doughnutLabels = mode === 'investment'
+        ? (currentLang === 'en' ? ['Invested Amount', 'Est. Returns'] : ['निवेशित राशि', 'अनुमानित रिटर्न'])
+        : (currentLang === 'en' ? ['Principal', 'Interest'] : ['मूलधन', 'ब्याज']);
+
+      const subtextLabel = mode === 'investment'
+        ? (currentLang === 'en' ? 'Total Value' : 'कुल मूल्य')
+        : (currentLang === 'en' ? 'Total Outflow' : 'कुल भुगतान');
+
       doughnutChartInstance.current = new Chart(doughnutRef.current, {
         type: 'doughnut',
         data: {
-          labels: currentLang === 'en' ? ['Principal', 'Interest'] : ['मूलधन', 'ब्याज'],
+          labels: doughnutLabels,
           datasets: [{
             data: [principal, interest],
             backgroundColor: ['#6366f1', '#f59e0b'],
@@ -60,8 +68,9 @@ export default function LoanCharts({ principal, interest, yearlySchedule, curren
               callbacks: {
                 label: (context: any) => {
                   const val = context.raw;
-                  const pct = ((val / total) * 100).toFixed(1);
-                  return ` ₹${Math.round(val).toLocaleString('en-IN')} (${pct}%)`;
+                  const pct = ((val / total) * 105).toFixed(1);
+                  const displayPct = Math.min(100, parseFloat(pct)).toFixed(1);
+                  return ` ₹${Math.round(val).toLocaleString('en-IN')} (${displayPct}%)`;
                 }
               }
             }
@@ -79,7 +88,7 @@ export default function LoanCharts({ principal, interest, yearlySchedule, curren
             ctx.fillStyle = document.body.classList.contains('dark') ? '#94A3B8' : '#64748B';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(currentLang === 'en' ? 'Total Outflow' : 'कुल भुगतान', width / 2, height / 2 - 12);
+            ctx.fillText(subtextLabel, width / 2, height / 2 - 12);
 
             // Draw Amount Value
             ctx.font = 'bold 16px Outfit';
@@ -101,19 +110,27 @@ export default function LoanCharts({ principal, interest, yearlySchedule, curren
       const principalData = yearlySchedule.map(item => item.principalPaid);
       const interestData = yearlySchedule.map(item => item.interestPaid);
 
+      const labelA = mode === 'investment'
+        ? (currentLang === 'en' ? 'Invested Amount' : 'निवेशित राशि')
+        : (currentLang === 'en' ? 'Principal Paid' : 'चुकाया गया मूलधन');
+
+      const labelB = mode === 'investment'
+        ? (currentLang === 'en' ? 'Est. Returns' : 'अनुमानित रिटर्न')
+        : (currentLang === 'en' ? 'Interest Paid' : 'चुकाया गया ब्याज');
+
       barChartInstance.current = new Chart(barRef.current, {
         type: 'bar',
         data: {
           labels: labels,
           datasets: [
             {
-              label: currentLang === 'en' ? 'Principal Paid' : 'चुकाया गया मूलधन',
+              label: labelA,
               data: principalData,
               backgroundColor: '#6366f1',
               stack: 'Stack 0',
             },
             {
-              label: currentLang === 'en' ? 'Interest Paid' : 'चुकाया गया ब्याज',
+              label: labelB,
               data: interestData,
               backgroundColor: '#f59e0b',
               stack: 'Stack 0',
@@ -139,51 +156,49 @@ export default function LoanCharts({ principal, interest, yearlySchedule, curren
               cornerRadius: 8,
               mode: 'index',
               intersect: false,
-              callbacks: {
-                label: (context: any) => {
-                  return ` ${context.dataset.label}: ₹${Math.round(context.raw).toLocaleString('en-IN')}`;
-                }
-              }
             }
           },
           scales: {
             x: {
               stacked: true,
               grid: { display: false },
-              ticks: { color: document.body.classList.contains('dark') ? '#94A3B8' : '#64748B', font: { family: 'Inter', size: 10, weight: 'bold' } }
+              ticks: { color: document.body.classList.contains('dark') ? '#64748B' : '#94A3B8', font: { family: 'Inter', size: 10 } }
             },
             y: {
               stacked: true,
-              grid: { color: document.body.classList.contains('dark') ? 'rgba(51, 65, 85, 0.4)' : 'rgba(241, 245, 249, 0.8)' },
-              ticks: { color: document.body.classList.contains('dark') ? '#94A3B8' : '#64748B', font: { family: 'Inter', size: 10 } }
+              grid: { color: document.body.classList.contains('dark') ? 'rgba(51, 65, 85, 0.3)' : 'rgba(226, 232, 240, 0.6)' },
+              ticks: {
+                color: document.body.classList.contains('dark') ? '#64748B' : '#94A3B8',
+                font: { family: 'Inter', size: 10 },
+                callback: (value: any) => {
+                  if (value >= 10000000) return `₹${(value / 10000000).toFixed(1)}Cr`;
+                  if (value >= 100000) return `₹${(value / 100000).toFixed(0)}L`;
+                  return `₹${value.toLocaleString('en-IN')}`;
+                }
+              }
             }
           }
         }
       });
     }
-
-    return () => {
-      if (doughnutChartInstance.current) doughnutChartInstance.current.destroy();
-      if (barChartInstance.current) barChartInstance.current.destroy();
-    };
-  }, [principal, interest, yearlySchedule, currentLang]);
+  }, [principal, interest, yearlySchedule, currentLang, mode]);
 
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 mt-6">
-      <div className="glass-panel rounded-3xl p-5 glow-card-indigo transition-all duration-300">
-        <h4 className="text-center font-display text-xs font-extrabold text-slate-500 dark:text-slate-400 mb-6 uppercase tracking-widest">
-          {translations[currentLang].principalvsInterest}
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-12" id="loan-charts-container-block">
+      <div className="glass-panel rounded-3xl p-5 lg:col-span-4 flex flex-col items-center justify-center min-h-[320px]">
+        <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 self-start pl-2">
+          {currentLang === 'en' ? 'Asset Allocation Summary' : 'परिसंपत्ति आबंटन सारांश'}
         </h4>
-        <div className="relative h-[260px] w-full">
+        <div className="relative w-full max-w-[240px] flex-1">
           <canvas ref={doughnutRef} />
         </div>
       </div>
 
-      <div className="glass-panel rounded-3xl p-5 glow-card-indigo transition-all duration-300">
-        <h4 className="text-center font-display text-xs font-extrabold text-slate-500 dark:text-slate-400 mb-6 uppercase tracking-widest">
-          {currentLang === 'en' ? 'Yearly Repayment Outflow Breakdown' : 'वार्षिक पुनर्भुगतान आउटफ्लो का विवरण'}
+      <div className="glass-panel rounded-3xl p-5 lg:col-span-8 flex flex-col min-h-[320px]">
+        <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">
+          {currentLang === 'en' ? 'Yearly Cumulative Asset Growth' : 'वार्षिक संचयी संपत्ति विकास'}
         </h4>
-        <div className="relative h-[260px] w-full">
+        <div className="relative w-full flex-1">
           <canvas ref={barRef} />
         </div>
       </div>

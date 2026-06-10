@@ -20,8 +20,16 @@ import {
   ArrowLeft,
   BookOpen
 } from 'lucide-react';
-import { calculateEMI, generateSchedules, simulateAdvancedPrepayments } from './utils';
-import { Language, LoanType, TenureType, AppTab, translations } from './types';
+import { 
+  calculateEMI, 
+  generateSchedules, 
+  simulateAdvancedPrepayments,
+  simulateSIP,
+  simulateLumpsum,
+  simulateFD,
+  simulateRD 
+} from './utils';
+import { Language, LoanType, TenureType, AppTab, InvestmentType, translations } from './types';
 import Navbar from './components/Navbar';
 import BankRateTable from './components/BankRateTable';
 import AmortizationTable from './components/AmortizationTable';
@@ -164,6 +172,26 @@ export default function App() {
   const [ccTenureMonths, setCcTenureMonths] = useState<number>(12); // 12 months pill
   const [ccProcessingFee, setCcProcessingFee] = useState<number>(199); // absolute or % (flat in INR)
   const [ccApplyGst, setCcApplyGst] = useState<boolean>(true); // GST 18% on fees
+
+  // ----------------------------------------------------
+  // INVESTMENT CALCULATOR STATES
+  // ----------------------------------------------------
+  const [investmentType, setInvestmentType] = useState<InvestmentType>('sip');
+  const [sipAmount, setSipAmount] = useState<number>(5000);
+  const [sipRate, setSipRate] = useState<number>(12);
+  const [sipTenure, setSipTenure] = useState<number>(10);
+  
+  const [lumpAmount, setLumpAmount] = useState<number>(100000);
+  const [lumpRate, setLumpRate] = useState<number>(12);
+  const [lumpTenure, setLumpTenure] = useState<number>(10);
+
+  const [fdAmount, setFdAmount] = useState<number>(100000);
+  const [fdRate, setFdRate] = useState<number>(7);
+  const [fdTenure, setFdTenure] = useState<number>(5);
+
+  const [rdAmount, setRdAmount] = useState<number>(5000);
+  const [rdRate, setRdRate] = useState<number>(7);
+  const [rdTenure, setRdTenure] = useState<number>(5);
 
   // ----------------------------------------------------
   // TOAST TRIGGER
@@ -447,6 +475,60 @@ export default function App() {
   const ccTotalInterest = Math.max(0, (ccMonthlyEMI * ccTenureMonths) - ccPurchaseAmt);
   const ccEffectiveApr = ccRate + ((ccTotalImmediateFee / ccPurchaseAmt) * 100 * (12 / ccTenureMonths));
 
+  // ----------------------------------------------------
+  // INVESTMENT CALCULATIONS
+  // ----------------------------------------------------
+  let investInvested = 0;
+  let investWealth = 0;
+  let investReturns = 0;
+  let investSchedules = {
+    monthly: [] as AmortizationRow[],
+    yearly: [] as AmortizationRow[],
+    financialYear: [] as AmortizationRow[]
+  };
+
+  if (investmentType === 'sip') {
+    const res = simulateSIP(sipAmount, sipRate, sipTenure);
+    investInvested = res.invested;
+    investWealth = res.wealth;
+    investReturns = res.returns;
+    investSchedules = {
+      monthly: res.monthly.map(m => ({ period: m.period, label: m.label, emi: m.invested + m.returns, principalPaid: m.invested, interestPaid: m.returns, endingBalance: m.wealth, endingBalancePercentage: (m.invested/res.invested)*100 })),
+      yearly: res.yearly.map(y => ({ period: y.period, label: y.label, emi: y.invested + y.returns, principalPaid: y.invested, interestPaid: y.returns, endingBalance: y.wealth, endingBalancePercentage: (y.invested/res.invested)*100 })),
+      financialYear: res.yearly.map(y => ({ period: y.period, label: `FY ${2026 + y.period - 1}-${(2026 + y.period).toString().slice(-2)}`, emi: y.invested + y.returns, principalPaid: y.invested, interestPaid: y.returns, endingBalance: y.wealth, endingBalancePercentage: (y.invested/res.invested)*100 }))
+    };
+  } else if (investmentType === 'lumpsum') {
+    const res = simulateLumpsum(lumpAmount, lumpRate, lumpTenure);
+    investInvested = res.invested;
+    investWealth = res.wealth;
+    investReturns = res.returns;
+    investSchedules = {
+      monthly: res.monthly.map(m => ({ period: m.period, label: m.label, emi: m.invested + m.returns, principalPaid: m.invested, interestPaid: m.returns, endingBalance: m.wealth, endingBalancePercentage: 100 })),
+      yearly: res.yearly.map(y => ({ period: y.period, label: y.label, emi: y.invested + y.returns, principalPaid: y.invested, interestPaid: y.returns, endingBalance: y.wealth, endingBalancePercentage: 100 })),
+      financialYear: res.yearly.map(y => ({ period: y.period, label: `FY ${2026 + y.period - 1}-${(2026 + y.period).toString().slice(-2)}`, emi: y.invested + y.returns, principalPaid: y.invested, interestPaid: y.returns, endingBalance: y.wealth, endingBalancePercentage: 100 }))
+    };
+  } else if (investmentType === 'fd') {
+    const res = simulateFD(fdAmount, fdRate, fdTenure);
+    investInvested = res.invested;
+    investWealth = res.wealth;
+    investReturns = res.returns;
+    investSchedules = {
+      monthly: res.monthly.map(m => ({ period: m.period, label: m.label, emi: m.invested + m.returns, principalPaid: m.invested, interestPaid: m.returns, endingBalance: m.wealth, endingBalancePercentage: 100 })),
+      yearly: res.yearly.map(y => ({ period: y.period, label: y.label, emi: y.invested + y.returns, principalPaid: y.invested, interestPaid: y.returns, endingBalance: y.wealth, endingBalancePercentage: 100 })),
+      financialYear: res.yearly.map(y => ({ period: y.period, label: `FY ${2026 + y.period - 1}-${(2026 + y.period).toString().slice(-2)}`, emi: y.invested + y.returns, principalPaid: y.invested, interestPaid: y.returns, endingBalance: y.wealth, endingBalancePercentage: 100 }))
+    };
+  } else if (investmentType === 'rd') {
+    const res = simulateRD(rdAmount, rdRate, rdTenure);
+    investInvested = res.invested;
+    investWealth = res.wealth;
+    investReturns = res.returns;
+    investSchedules = {
+      monthly: res.monthly.map(m => ({ period: m.period, label: m.label, emi: m.invested + m.returns, principalPaid: m.invested, interestPaid: m.returns, endingBalance: m.wealth, endingBalancePercentage: (m.invested/res.invested)*100 })),
+      yearly: res.yearly.map(y => ({ period: y.period, label: y.label, emi: y.invested + y.returns, principalPaid: y.invested, interestPaid: y.returns, endingBalance: y.wealth, endingBalancePercentage: (y.invested/res.invested)*100 })),
+      financialYear: res.yearly.map(y => ({ period: y.period, label: `FY ${2026 + y.period - 1}-${(2026 + y.period).toString().slice(-2)}`, emi: y.invested + y.returns, principalPaid: y.invested, interestPaid: y.returns, endingBalance: y.wealth, endingBalancePercentage: (y.invested/res.invested)*100 }))
+    };
+  }
+
   const t = translations[lang];
 
   // Lookup selected article for full-page reading mode
@@ -483,9 +565,16 @@ export default function App() {
         darkMode={darkMode}
         onToggleDarkMode={toggleTheme}
         activeTab={activeTab}
-        onTabChange={(tab) => {
-          setActiveArticleId(null); // Return to calculators if nav tabs are clicked
+        onTabChange={(tab, subType) => {
+          setActiveArticleId(null);
           setActiveTab(tab);
+          if (subType) {
+            if (tab === 'calculator') {
+              setLoanType(subType as LoanType);
+            } else if (tab === 'investments') {
+              setInvestmentType(subType as InvestmentType);
+            }
+          }
         }}
         onShowToast={showToast}
         onOpenLegalModal={openLegalModal}
@@ -1519,6 +1608,290 @@ export default function App() {
                     </div>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* ======================================================================= */}
+            {/* TAB 5: INVESTMENT TOOLS (SIP, FD, RD, LUMPSUM) */}
+            {/* ======================================================================= */}
+            {activeTab === 'investments' && (
+              <div className="space-y-8 animate-in fade-in duration-200" id="investment-tab-block">
+                <div className="glass-panel rounded-3xl p-6 md:p-8">
+                  
+                  {/* Tab options inside investments */}
+                  <div className="mb-8 flex overflow-x-auto gap-1 rounded-2xl bg-slate-100/60 p-1.5 dark:bg-slate-800/60 max-w-xl border border-slate-200/30 dark:border-slate-800/30" id="investment-type-tabs">
+                    <button
+                      onClick={() => setInvestmentType('sip')}
+                      className={`flex-1 min-w-[100px] py-2.5 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+                        investmentType === 'sip'
+                          ? 'bg-white text-indigo-650 shadow-md scale-[1.02] dark:bg-slate-700 dark:text-white'
+                          : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
+                      }`}
+                    >
+                      {t.sip}
+                    </button>
+                    <button
+                      onClick={() => setInvestmentType('lumpsum')}
+                      className={`flex-1 min-w-[100px] py-2.5 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+                        investmentType === 'lumpsum'
+                          ? 'bg-white text-indigo-650 shadow-md scale-[1.02] dark:bg-slate-700 dark:text-white'
+                          : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
+                      }`}
+                    >
+                      {t.lumpsum}
+                    </button>
+                    <button
+                      onClick={() => setInvestmentType('fd')}
+                      className={`flex-1 min-w-[100px] py-2.5 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+                        investmentType === 'fd'
+                          ? 'bg-white text-indigo-650 shadow-md scale-[1.02] dark:bg-slate-700 dark:text-white'
+                          : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
+                      }`}
+                    >
+                      {t.fd}
+                    </button>
+                    <button
+                      onClick={() => setInvestmentType('rd')}
+                      className={`flex-1 min-w-[100px] py-2.5 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+                        investmentType === 'rd'
+                          ? 'bg-white text-indigo-655 shadow-md scale-[1.02] dark:bg-slate-700 dark:text-white'
+                          : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
+                      }`}
+                    >
+                      {t.rd}
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+                    
+                    {/* Inputs panel */}
+                    <div className="lg:col-span-7 space-y-6">
+                      
+                      {/* Amount input */}
+                      <div className="space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-bold text-slate-700 dark:text-slate-355 tracking-wide uppercase">
+                            {investmentType === 'sip' && (lang === 'en' ? 'Monthly Investment' : 'मासिक निवेश')}
+                            {investmentType === 'lumpsum' && (lang === 'en' ? 'Total Investment' : 'एकमुश्त निवेश')}
+                            {investmentType === 'fd' && (lang === 'en' ? 'FD Principal Amount' : 'FD मूलधन राशि')}
+                            {investmentType === 'rd' && (lang === 'en' ? 'RD Monthly Deposit' : 'RD मासिक जमा')}
+                          </label>
+                          
+                          <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50/80 px-3.5 py-1.5 font-mono text-sm font-bold text-slate-800 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-100">
+                            <span className="text-slate-400 dark:text-slate-505 mr-1 font-semibold">₹</span>
+                            <input
+                              type="number"
+                              value={
+                                investmentType === 'sip' ? sipAmount :
+                                investmentType === 'lumpsum' ? lumpAmount :
+                                investmentType === 'fd' ? fdAmount : rdAmount
+                              }
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value, 10) || 0;
+                                if (investmentType === 'sip') setSipAmount(val);
+                                else if (investmentType === 'lumpsum') setLumpAmount(val);
+                                else if (investmentType === 'fd') setFdAmount(val);
+                                else setRdAmount(val);
+                              }}
+                              className="w-32 bg-transparent text-right focus:outline-none focus:ring-0 text-[15px] font-bold"
+                            />
+                          </div>
+                        </div>
+
+                        <input
+                          type="range"
+                          min={investmentType === 'sip' || investmentType === 'rd' ? 500 : 5000}
+                          max={investmentType === 'sip' || investmentType === 'rd' ? 1000000 : 10000000}
+                          step={investmentType === 'sip' || investmentType === 'rd' ? 500 : 5000}
+                          value={
+                            investmentType === 'sip' ? sipAmount :
+                            investmentType === 'lumpsum' ? lumpAmount :
+                            investmentType === 'fd' ? fdAmount : rdAmount
+                          }
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value, 10) || 0;
+                            if (investmentType === 'sip') setSipAmount(val);
+                            else if (investmentType === 'lumpsum') setLumpAmount(val);
+                            else if (investmentType === 'fd') setFdAmount(val);
+                            else setRdAmount(val);
+                          }}
+                          className="w-full h-2 cursor-pointer rounded-lg accent-indigo-500"
+                        />
+                      </div>
+
+                      {/* Interest / Return Rate input */}
+                      <div className="space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-bold text-slate-700 dark:text-slate-355 tracking-wide uppercase">
+                            {lang === 'en' ? 'Expected Return Rate (% p.a.)' : 'अपेक्षित रिटर्न दर (सालाना %)'}
+                          </label>
+                          <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50/80 px-3.5 py-1.5 font-mono text-sm font-bold text-slate-800 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-100">
+                            <input
+                              type="number"
+                              value={
+                                investmentType === 'sip' ? sipRate :
+                                investmentType === 'lumpsum' ? lumpRate :
+                                investmentType === 'fd' ? fdRate : rdRate
+                              }
+                              step={0.1}
+                              onChange={(e) => {
+                                const val = parseFloat(e.target.value) || 0;
+                                if (investmentType === 'sip') setSipRate(val);
+                                else if (investmentType === 'lumpsum') setLumpRate(val);
+                                else if (investmentType === 'fd') setFdRate(val);
+                                else setRdRate(val);
+                              }}
+                              className="w-16 bg-transparent text-right focus:outline-none text-[15px] font-bold"
+                            />
+                            <span className="text-slate-400 dark:text-slate-505 ml-1 font-semibold">%</span>
+                          </div>
+                        </div>
+
+                        <input
+                          type="range"
+                          min={1}
+                          max={30}
+                          step={0.1}
+                          value={
+                            investmentType === 'sip' ? sipRate :
+                            investmentType === 'lumpsum' ? lumpRate :
+                            investmentType === 'fd' ? fdRate : rdRate
+                          }
+                          onChange={(e) => {
+                            const val = parseFloat(e.target.value) || 0;
+                            if (investmentType === 'sip') setSipRate(val);
+                            else if (investmentType === 'lumpsum') setLumpRate(val);
+                            else if (investmentType === 'fd') setFdRate(val);
+                            else setRdRate(val);
+                          }}
+                          className="w-full h-2 cursor-pointer rounded-lg accent-indigo-500"
+                        />
+                      </div>
+
+                      {/* Tenure / Time Period input */}
+                      <div className="space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-bold text-slate-700 dark:text-slate-355 tracking-wide uppercase">
+                            {lang === 'en' ? 'Time Period (Years)' : 'समय अवधि (वर्ष)'}
+                          </label>
+                          <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50/80 px-3.5 py-1.5 font-mono text-sm font-bold text-slate-800 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-100">
+                            <input
+                              type="number"
+                              value={
+                                investmentType === 'sip' ? sipTenure :
+                                investmentType === 'lumpsum' ? lumpTenure :
+                                investmentType === 'fd' ? fdTenure : rdTenure
+                              }
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value, 10) || 0;
+                                if (investmentType === 'sip') setSipTenure(val);
+                                else if (investmentType === 'lumpsum') setLumpTenure(val);
+                                else if (investmentType === 'fd') setFdTenure(val);
+                                else setRdTenure(val);
+                              }}
+                              className="w-16 bg-transparent text-right focus:outline-none text-[15px] font-bold"
+                            />
+                            <span className="text-slate-400 dark:text-slate-505 ml-1 font-semibold">Yr</span>
+                          </div>
+                        </div>
+
+                        <input
+                          type="range"
+                          min={1}
+                          max={35}
+                          step={1}
+                          value={
+                            investmentType === 'sip' ? sipTenure :
+                            investmentType === 'lumpsum' ? lumpTenure :
+                            investmentType === 'fd' ? fdTenure : rdTenure
+                          }
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value, 10) || 0;
+                            if (investmentType === 'sip') setSipTenure(val);
+                            else if (investmentType === 'lumpsum') setLumpTenure(val);
+                            else if (investmentType === 'fd') setFdTenure(val);
+                            else setRdTenure(val);
+                          }}
+                          className="w-full h-2 cursor-pointer rounded-lg accent-indigo-500"
+                        />
+                      </div>
+
+                    </div>
+
+                    {/* Results panel */}
+                    <div className="lg:col-span-5 bg-slate-50/80 p-6 rounded-2xl dark:bg-slate-900/40 border border-slate-200/50 dark:border-slate-800/50 flex flex-col justify-between" id="investments-results-panel">
+                      <div className="space-y-4">
+                        <div className="rounded-xl border border-indigo-100 bg-gradient-to-br from-indigo-50/20 to-indigo-100/10 p-5 dark:border-indigo-950/60 dark:from-indigo-950/20 dark:to-slate-900/40 shadow-sm">
+                          <span className="text-[10px] text-indigo-650 dark:text-indigo-400 block uppercase tracking-wider font-mono font-bold">
+                            {investmentType === 'fd' ? t.fdMaturityValue : investmentType === 'rd' ? t.rdMaturityValue : t.totalValue}
+                          </span>
+                          <p className="font-display text-2xl font-black text-indigo-655 dark:text-indigo-400 tracking-tight mt-1">
+                            ₹{Math.round(investWealth).toLocaleString('en-IN')}
+                          </p>
+                        </div>
+
+                        <div className="space-y-2.5 text-xs border-t border-slate-200/60 dark:border-slate-800/80 pt-4">
+                          <div className="flex justify-between">
+                            <span className="text-slate-500 font-medium">{t.investedAmount}</span>
+                            <span className="font-mono font-bold text-slate-855 dark:text-white">₹{Math.round(investInvested).toLocaleString('en-IN')}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-slate-500 font-medium">{t.estReturns}</span>
+                            <span className="font-mono font-bold text-slate-855 dark:text-white text-amber-500">₹{Math.round(investReturns).toLocaleString('en-IN')}</span>
+                          </div>
+                        </div>
+
+                        {investWealth > 0 && (
+                          <div className="mt-6 p-4 bg-white dark:bg-slate-900/85 rounded-xl border border-slate-200/50 dark:border-slate-800/80 space-y-3.5 shadow-sm">
+                            <div className="flex items-start gap-2.5 text-xs text-slate-655 dark:text-slate-400">
+                              <Info className="h-4.5 w-4.5 text-indigo-500 shrink-0 mt-0.5" />
+                              <div>
+                                <p>
+                                  {lang === 'en' ? 'Your investments represent ' : 'आपका मूल निवेश कुल मूल्य का '}
+                                  <strong className="text-indigo-600 dark:text-indigo-400 font-bold">
+                                    {((investInvested / investWealth) * 100).toFixed(0)}%
+                                  </strong> 
+                                  {lang === 'en' ? ' of total wealth accumulated.' : ' प्रतिशत हिस्सा है।'}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden flex shadow-inner">
+                              <div 
+                                className="bg-indigo-500 h-full transition-all duration-500" 
+                                style={{ width: `${(investInvested / investWealth) * 100}%` }}
+                                title={`Invested: ${((investInvested / investWealth) * 100).toFixed(0)}%`}
+                              />
+                              <div 
+                                className="bg-amber-500 h-full transition-all duration-500" 
+                                style={{ width: `${(investReturns / investWealth) * 100}%` }}
+                                title={`Returns: ${((investReturns / investWealth) * 100).toFixed(0)}%`}
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                      </div>
+                    </div>
+
+                  </div>
+
+                </div>
+
+                {/* Investment Charts representation */}
+                <LoanCharts 
+                  principal={investInvested}
+                  interest={investReturns}
+                  yearlySchedule={investSchedules.yearly.map(row => ({ label: row.label, principalPaid: row.principalPaid, interestPaid: row.interestPaid }))}
+                  currentLang={lang}
+                  mode="investment"
+                />
+
+                {/* Investment schedule list */}
+                <AmortizationTable 
+                  schedule={investSchedules}
+                  currentLang={lang}
+                />
+
               </div>
             )}
 

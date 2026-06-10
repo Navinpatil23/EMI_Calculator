@@ -274,3 +274,186 @@ export function simulateAdvancedPrepayments(options: {
     closingMonth: closedMonth,
   };
 }
+
+/**
+ * Calculates SIP returns and yearly progression schedule
+ */
+export function simulateSIP(monthlyInvestment: number, annualRate: number, years: number) {
+  const months = years * 12;
+  const i = annualRate / 12 / 100;
+  
+  let totalInvested = 0;
+  let totalWealth = 0;
+  
+  const monthly: { period: number; label: string; invested: number; wealth: number; returns: number }[] = [];
+  const yearly: { period: number; label: string; invested: number; wealth: number; returns: number }[] = [];
+  
+  for (let m = 1; m <= months; m++) {
+    totalInvested += monthlyInvestment;
+    // Monthly compounding SIP formula iteration
+    totalWealth = (totalWealth + monthlyInvestment) * (1 + i);
+    
+    monthly.push({
+      period: m,
+      label: `Month ${m}`,
+      invested: totalInvested,
+      wealth: totalWealth,
+      returns: Math.max(0, totalWealth - totalInvested)
+    });
+    
+    if (m % 12 === 0) {
+      const y = m / 12;
+      yearly.push({
+        period: y,
+        label: `Year ${y}`,
+        invested: totalInvested,
+        wealth: totalWealth,
+        returns: Math.max(0, totalWealth - totalInvested)
+      });
+    }
+  }
+  
+  return {
+    invested: totalInvested,
+    wealth: totalWealth,
+    returns: Math.max(0, totalWealth - totalInvested),
+    monthly,
+    yearly
+  };
+}
+
+/**
+ * Calculates Lumpsum compounding returns
+ */
+export function simulateLumpsum(principal: number, annualRate: number, years: number) {
+  const r = annualRate / 100;
+  const monthlyRate = annualRate / 12 / 100;
+  const months = years * 12;
+  
+  let totalWealth = principal;
+  const monthly: { period: number; label: string; invested: number; wealth: number; returns: number }[] = [];
+  const yearly: { period: number; label: string; invested: number; wealth: number; returns: number }[] = [];
+  
+  for (let m = 1; m <= months; m++) {
+    totalWealth = totalWealth * (1 + monthlyRate); // Monthly compounding standard
+    monthly.push({
+      period: m,
+      label: `Month ${m}`,
+      invested: principal,
+      wealth: totalWealth,
+      returns: Math.max(0, totalWealth - principal)
+    });
+    
+    if (m % 12 === 0) {
+      const y = m / 12;
+      yearly.push({
+        period: y,
+        label: `Year ${y}`,
+        invested: principal,
+        wealth: totalWealth,
+        returns: Math.max(0, totalWealth - principal)
+      });
+    }
+  }
+  
+  return {
+    invested: principal,
+    wealth: totalWealth,
+    returns: Math.max(0, totalWealth - principal),
+    monthly,
+    yearly
+  };
+}
+
+/**
+ * Calculates Fixed Deposit (FD) returns (Quarterly compounding is standard in India)
+ */
+export function simulateFD(principal: number, annualRate: number, years: number) {
+  const n = 4; // Quarterly compounding
+  const r = annualRate / 100;
+  const months = years * 12;
+  
+  let totalWealth = principal;
+  const monthly: { period: number; label: string; invested: number; wealth: number; returns: number }[] = [];
+  const yearly: { period: number; label: string; invested: number; wealth: number; returns: number }[] = [];
+  
+  for (let m = 1; m <= months; m++) {
+    // FD compounds quarterly.
+    if (m % 3 === 0) {
+      totalWealth = totalWealth * (1 + r / n);
+    }
+    
+    monthly.push({
+      period: m,
+      label: `Month ${m}`,
+      invested: principal,
+      wealth: totalWealth,
+      returns: Math.max(0, totalWealth - principal)
+    });
+    
+    if (m % 12 === 0) {
+      const y = m / 12;
+      yearly.push({
+        period: y,
+        label: `Year ${y}`,
+        invested: principal,
+        wealth: totalWealth,
+        returns: Math.max(0, totalWealth - principal)
+      });
+    }
+  }
+  
+  return {
+    invested: principal,
+    wealth: totalWealth,
+    returns: Math.max(0, totalWealth - principal),
+    monthly,
+    yearly
+  };
+}
+
+/**
+ * Calculates Recurring Deposit (RD) returns
+ */
+export function simulateRD(monthlyDeposit: number, annualRate: number, years: number) {
+  const months = years * 12;
+  
+  let totalInvested = 0;
+  let totalWealth = 0;
+  
+  const monthly: { period: number; label: string; invested: number; wealth: number; returns: number }[] = [];
+  const yearly: { period: number; label: string; invested: number; wealth: number; returns: number }[] = [];
+  
+  for (let m = 1; m <= months; m++) {
+    totalInvested += monthlyDeposit;
+    totalWealth = (totalWealth + monthlyDeposit) * (1 + (annualRate / 12 / 100));
+    
+    monthly.push({
+      period: m,
+      label: `Month ${m}`,
+      invested: totalInvested,
+      wealth: totalWealth,
+      returns: Math.max(0, totalWealth - totalInvested)
+    });
+    
+    if (m % 12 === 0) {
+      const y = m / 12;
+      yearly.push({
+        period: y,
+        label: `Year ${y}`,
+        invested: totalInvested,
+        wealth: totalWealth,
+        returns: Math.max(0, totalWealth - totalInvested)
+      });
+    }
+  }
+  
+  return {
+    invested: totalInvested,
+    wealth: totalWealth,
+    returns: Math.max(0, totalWealth - totalInvested),
+    monthly,
+    yearly
+  };
+}
+

@@ -5,7 +5,8 @@
 export type Language = 'en' | 'hi';
 export type LoanType = 'home' | 'car' | 'personal';
 export type TenureType = 'years' | 'months';
-export type AppTab = 'calculator' | 'compare' | 'advanced' | 'creditcard';
+export type AppTab = 'calculator' | 'compare' | 'advanced' | 'creditcard' | 'investments';
+export type InvestmentType = 'sip' | 'lumpsum' | 'fd' | 'rd';
 
 export interface AmortizationRow {
   period: number; // Month or year number
@@ -150,7 +151,19 @@ export const translations = {
     getAppButton: "Get App",
     lakhs: "Lakhs",
     crore: "Crore",
-    k: "K"
+    k: "K",
+    investmentsTab: "Investment Tools",
+    sip: "SIP Calculator",
+    lumpsum: "Lumpsum Calculator",
+    fd: "Fixed Deposit (FD)",
+    rd: "Recurring Deposit (RD)",
+    monthlyInvestment: "Monthly Investment",
+    expectedReturnRate: "Expected Return Rate (% p.a.)",
+    investedAmount: "Invested Amount",
+    estReturns: "Est. Returns",
+    totalValue: "Total Value",
+    fdMaturityValue: "FD Maturity Value",
+    rdMaturityValue: "RD Maturity Value"
   },
   hi: {
     title: "ईएमआई कैलकुलेटर",
@@ -245,6 +258,18 @@ export const translations = {
     getAppButton: "ऐप डाउनलोड",
     lakhs: "लाख",
     crore: "करोड़",
-    k: "हज़ार"
+    k: "हज़ार",
+    investmentsTab: "निवेश टूल्स",
+    sip: "एसआईपी (SIP) कैलकुलेटर",
+    lumpsum: "एकमुश्त (Lumpsum) निवेश",
+    fd: "फिक्स्ड डिपॉजिट (FD)",
+    rd: "आरडी (RD) कैलकुलेटर",
+    monthlyInvestment: "मासिक निवेश",
+    expectedReturnRate: "अपेक्षित रिटर्न दर (सालाना %)",
+    investedAmount: "कुल निवेशित राशि",
+    estReturns: "अनुमानित रिटर्न",
+    totalValue: "कुल संपत्ति मूल्य",
+    fdMaturityValue: "FD परिपक्वता मूल्य",
+    rdMaturityValue: "RD परिपक्वता मूल्य"
   }
 };
