@@ -1,0 +1,6 @@
+{
+  "name": "EMI Calculator",
+  "description": "World-class EMI Calculator for Loans in India with interactive charts, amortization schedules, PDF/Excel export, comparison tools, and an AI Loan Advisor.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
