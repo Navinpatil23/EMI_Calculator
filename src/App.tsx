@@ -631,10 +631,6 @@ export default function App() {
                                 const val = parseInt(e.target.value, 10);
                                 handleAmountChange(isNaN(val) ? 0 : val);
                               }}
-                              onBlur={() => {
-                                const clamped = Math.max(currentAmtBounds.min, Math.min(currentAmtBounds.max, amount || 0));
-                                handleAmountChange(clamped);
-                              }}
                               className="w-32 bg-transparent text-right focus:outline-none focus:ring-0 text-[15px] font-bold"
                               min={0}
                               max={100000000}
@@ -651,7 +647,8 @@ export default function App() {
                           onChange={(e) => handleAmountSlider(parseInt(e.target.value) || currentAmtBounds.min)}
                           className="w-full h-2 cursor-pointer rounded-lg accent-indigo-500"
                           style={{
-                            background: `linear-gradient(to right, #6366f1 0%, #6366f1 ${((amount - currentAmtBounds.min) / (currentAmtBounds.max - currentAmtBounds.min)) * 100}%, ${darkMode ? '#334155' : '#E2E8F0'} ${((amount - currentAmtBounds.min) / (currentAmtBounds.max - currentAmtBounds.min)) * 100}%, ${darkMode ? '#334155' : '#E2E8F0'} 100%)`
+                            background: `linear-gradient(to right, #6366f1 0%, #6366f1 ${Math.max(0, Math.min(100, ((amount - currentAmtBounds.min) / (currentAmtBounds.max - currentAmtBounds.min)) * 100))}%`,
+                            backgroundColor: darkMode ? '#334155' : '#E2E8F0'
                           }}
                         />
 
@@ -677,15 +674,12 @@ export default function App() {
                           <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50/80 px-3.5 py-1.5 font-mono text-sm font-bold text-slate-800 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/10 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-100 transition-all">
                             <input
                               type="number"
+                              placeholder="8.5"
                               value={interestRate || ''}
                               step={0.1}
                               onChange={(e) => {
                                 const val = parseFloat(e.target.value);
                                 setInterestRate(isNaN(val) ? 0 : val);
-                              }}
-                              onBlur={() => {
-                                const clamped = Math.max(1, Math.min(30, interestRate || 0));
-                                setInterestRate(clamped);
                               }}
                               className="w-16 bg-transparent text-right focus:outline-none text-[15px] font-bold"
                               min={0}
@@ -704,7 +698,8 @@ export default function App() {
                           onChange={(e) => setInterestRate(parseFloat(e.target.value) || 5)}
                           className="w-full h-2 cursor-pointer rounded-lg accent-indigo-500"
                           style={{
-                            background: `linear-gradient(to right, #6366f1 0%, #6366f1 ${((interestRate - 5) / (20 - 5)) * 100}%, ${darkMode ? '#334155' : '#E2E8F0'} ${((interestRate - 5) / (20 - 5)) * 100}%, ${darkMode ? '#334155' : '#E2E8F0'} 100%)`
+                            background: `linear-gradient(to right, #6366f1 0%, #6366f1 ${Math.max(0, Math.min(100, ((interestRate - 5) / (20 - 5)) * 100))}%`,
+                            backgroundColor: darkMode ? '#334155' : '#E2E8F0'
                           }}
                         />
 
@@ -751,15 +746,11 @@ export default function App() {
                             <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50/80 px-3.5 py-1.5 font-mono text-sm font-bold text-slate-800 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/10 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-100 transition-all">
                               <input
                                 type="number"
+                                placeholder="20"
                                 value={tenure || ''}
                                 onChange={(e) => {
                                   const val = parseInt(e.target.value, 10);
                                   setTenure(isNaN(val) ? 0 : val);
-                                }}
-                                onBlur={() => {
-                                  const maxLimit = tenureType === 'years' ? 30 : 360;
-                                  const clamped = Math.max(1, Math.min(maxLimit, tenure || 1));
-                                  setTenure(clamped);
                                 }}
                                 className="w-12 bg-transparent text-right focus:outline-none text-[15px] font-bold"
                               />
@@ -776,7 +767,8 @@ export default function App() {
                           onChange={(e) => setTenure(parseInt(e.target.value) || 1)}
                           className="w-full h-2 cursor-pointer rounded-lg accent-indigo-500"
                           style={{
-                            background: `linear-gradient(to right, #6366f1 0%, #6366f1 ${((tenure - 1) / ((tenureType === 'years' ? 30 : 360) - 1)) * 100}%, ${darkMode ? '#334155' : '#E2E8F0'} ${((tenure - 1) / ((tenureType === 'years' ? 30 : 360) - 1)) * 100}%, ${darkMode ? '#334155' : '#E2E8F0'} 100%)`
+                            background: `linear-gradient(to right, #6366f1 0%, #6366f1 ${Math.max(0, Math.min(100, ((tenure - 1) / ((tenureType === 'years' ? 30 : 360) - 1)) * 100))}%`,
+                            backgroundColor: darkMode ? '#334155' : '#E2E8F0'
                           }}
                         />
 
